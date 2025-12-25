@@ -2,11 +2,11 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Javlot — Service Presentation</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -22,11 +22,93 @@
         }
 
         /* ==========================================
+           ROTATE DEVICE OVERLAY
+        ========================================== */
+        .rotate-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .rotate-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 32px;
+            color: rgba(255, 255, 255, 0.9);
+            animation: rotateHint 2s ease-in-out infinite;
+        }
+
+        @keyframes rotateHint {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(90deg); }
+        }
+
+        .rotate-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .rotate-text {
+            font-size: 16px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            max-width: 280px;
+        }
+
+        .rotate-hint {
+            margin-top: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        .rotate-hint-icon {
+            width: 20px;
+            height: 20px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .rotate-hint-text {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Show overlay only on portrait mobile */
+        @media (max-width: 900px) and (orientation: portrait) {
+            .rotate-overlay {
+                display: flex;
+            }
+            .presentation-container,
+            .dynamic-background,
+            .bg-overlay,
+            .bg-noise,
+            .progress-bar {
+                display: none !important;
+            }
+        }
+
+        /* ==========================================
            DYNAMIC BACKGROUND
         ========================================== */
         .dynamic-background {
             position: fixed;
-            inset: -100px; /* Extend beyond viewport to avoid blur edges */
+            inset: -100px;
             z-index: 0;
             overflow: hidden;
         }
@@ -46,7 +128,6 @@
             opacity: 1;
         }
 
-        /* Dark overlay on the blurred background */
         .bg-overlay {
             position: fixed;
             inset: 0;
@@ -57,7 +138,6 @@
             pointer-events: none;
         }
 
-        /* Subtle noise texture */
         .bg-noise {
             position: fixed;
             inset: 0;
@@ -75,6 +155,7 @@
             z-index: 10;
             width: 100%;
             height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             padding: 24px 24px 0 24px;
@@ -155,6 +236,8 @@
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             color: rgba(255, 255, 255, 0.5);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .nav-btn:hover:not(:disabled) {
@@ -166,6 +249,7 @@
 
         .nav-btn:active:not(:disabled) {
             transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.15);
         }
 
         .nav-btn:disabled {
@@ -196,6 +280,7 @@
             background: rgba(255, 255, 255, 0.2);
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-tap-highlight-color: transparent;
         }
 
         .indicator:hover {
@@ -227,38 +312,84 @@
         }
 
         /* ==========================================
-           RESPONSIVE
+           RESPONSIVE - LANDSCAPE MOBILE & TABLET
         ========================================== */
-        @media (max-width: 768px) {
+        @media (max-height: 500px) {
             .presentation-container {
-                padding: 16px 16px 0 16px;
+                padding: 12px 16px 0 16px;
             }
-
+            
             .nav-container {
-                gap: 12px;
-                padding: 16px 0;
+                padding: 12px 0;
+                gap: 16px;
             }
-
+            
             .nav-btn {
-                width: 44px;
-                height: 44px;
+                width: 40px;
+                height: 40px;
             }
-
+            
+            .nav-btn svg {
+                width: 18px;
+                height: 18px;
+            }
+            
             .slide-indicators {
                 padding: 6px 12px;
+                gap: 6px;
             }
-
+            
             .indicator {
                 width: 6px;
                 height: 6px;
             }
-
+            
             .indicator.active {
                 width: 18px;
             }
+            
+            .slide img {
+                border-radius: 10px;
+            }
+        }
+
+        @media (max-width: 768px) and (orientation: landscape) {
+            .presentation-container {
+                padding: 8px 12px 0 12px;
+            }
+
+            .nav-container {
+                gap: 12px;
+                padding: 10px 0;
+            }
+
+            .nav-btn {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .nav-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            .slide-indicators {
+                padding: 5px 10px;
+                gap: 5px;
+            }
+
+            .indicator {
+                width: 5px;
+                height: 5px;
+            }
+
+            .indicator.active {
+                width: 16px;
+                border-radius: 3px;
+            }
 
             .slide img {
-                border-radius: 12px;
+                border-radius: 8px;
             }
 
             .bg-image {
@@ -266,19 +397,92 @@
             }
         }
 
-        @media (max-width: 480px) {
-            .slide img {
-                border-radius: 8px;
+        /* Extra small landscape (very short screens) */
+        @media (max-height: 400px) and (orientation: landscape) {
+            .presentation-container {
+                padding: 6px 10px 0 10px;
             }
-
+            
+            .nav-container {
+                padding: 8px 0;
+                gap: 10px;
+            }
+            
             .nav-btn {
-                width: 40px;
-                height: 40px;
+                width: 32px;
+                height: 32px;
+            }
+            
+            .nav-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+            
+            .slide-indicators {
+                padding: 4px 8px;
+                gap: 4px;
+            }
+            
+            .indicator {
+                width: 4px;
+                height: 4px;
+            }
+            
+            .indicator.active {
+                width: 14px;
+            }
+            
+            .slide img {
+                border-radius: 6px;
+            }
+        }
+
+        /* Tablet landscape */
+        @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+            .presentation-container {
+                padding: 16px 20px 0 20px;
+            }
+            
+            .nav-container {
+                padding: 16px 0;
+            }
+        }
+
+        /* Safe area for notched devices */
+        @supports (padding: max(0px)) {
+            .presentation-container {
+                padding-left: max(24px, env(safe-area-inset-left));
+                padding-right: max(24px, env(safe-area-inset-right));
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            
+            @media (max-width: 768px) and (orientation: landscape) {
+                .presentation-container {
+                    padding-left: max(12px, env(safe-area-inset-left));
+                    padding-right: max(12px, env(safe-area-inset-right));
+                }
             }
         }
     </style>
 </head>
 <body>
+    <!-- Rotate Device Overlay -->
+    <div class="rotate-overlay" id="rotateOverlay">
+        <svg class="rotate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+            <line x1="12" y1="18" x2="12" y2="18.01" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <h2 class="rotate-title">Rotate Your Device</h2>
+        <p class="rotate-text">Please rotate your phone to landscape mode for the best viewing experience.</p>
+        <div class="rotate-hint">
+            <svg class="rotate-hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 4v6h6"/>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+            </svg>
+            <span class="rotate-hint-text">Turn 90°</span>
+        </div>
+    </div>
+
     <!-- Dynamic Blurred Background -->
     <div class="dynamic-background" id="dynamicBg"></div>
     <div class="bg-overlay"></div>
@@ -323,7 +527,7 @@
         </div>
 
         <div class="nav-container">
-            <button class="nav-btn" id="prevBtn" aria-label="Slide précédente">
+            <button class="nav-btn" id="prevBtn" aria-label="Previous slide">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
@@ -331,7 +535,7 @@
 
             <div class="slide-indicators" id="indicators"></div>
 
-            <button class="nav-btn" id="nextBtn" aria-label="Slide suivante">
+            <button class="nav-btn" id="nextBtn" aria-label="Next slide">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
@@ -376,25 +580,20 @@
         }
 
         function updateSlide() {
-            // Update slides
             slides.forEach(function(slide, index) {
                 slide.classList.toggle('active', index === currentIndex);
             });
 
-            // Update background images
             bgImages.forEach(function(bg, index) {
                 bg.classList.toggle('active', index === currentIndex);
             });
 
-            // Update indicators
             document.querySelectorAll('.indicator').forEach(function(dot, index) {
                 dot.classList.toggle('active', index === currentIndex);
             });
 
-            // Update progress bar
             progressBar.style.width = ((currentIndex + 1) / totalSlides * 100) + '%';
 
-            // Update button states
             prevBtn.disabled = currentIndex === 0;
             nextBtn.disabled = currentIndex === totalSlides - 1;
         }
