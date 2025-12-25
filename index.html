@@ -293,129 +293,6 @@
         }
         
         /* ==========================================
-           ZOOM MAGNIFIER (mobile only)
-        ========================================== */
-        .magnifier {
-            display: none;
-            position: fixed;
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9000;
-            opacity: 0;
-            transform: scale(0.5);
-            transition: opacity 0.15s ease, transform 0.15s ease;
-            
-            /* Glass UI effect */
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-                0 0 60px rgba(0, 0, 0, 0.4);
-            
-            overflow: hidden;
-        }
-        
-        .magnifier.active {
-            opacity: 1;
-            transform: scale(1);
-        }
-        
-        .magnifier-content {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            overflow: hidden;
-            border-radius: 50%;
-        }
-        
-        .magnifier-image {
-            position: absolute;
-            max-width: none;
-            pointer-events: none;
-        }
-        
-        .magnifier-crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 16px;
-            height: 16px;
-            pointer-events: none;
-            opacity: 0.7;
-        }
-        
-        .magnifier-crosshair::before,
-        .magnifier-crosshair::after {
-            content: '';
-            position: absolute;
-            background: rgba(255, 255, 255, 0.6);
-        }
-        
-        .magnifier-crosshair::before {
-            width: 1px;
-            height: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        .magnifier-crosshair::after {
-            height: 1px;
-            width: 100%;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        
-        .magnifier-ring {
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            pointer-events: none;
-        }
-        
-        .magnifier-shine {
-            position: absolute;
-            top: 6%;
-            left: 12%;
-            width: 40%;
-            height: 25%;
-            background: linear-gradient(
-                135deg,
-                rgba(255, 255, 255, 0.3) 0%,
-                rgba(255, 255, 255, 0) 100%
-            );
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        
-        .magnifier-zoom-label {
-            position: absolute;
-            bottom: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.7);
-            background: rgba(0, 0, 0, 0.5);
-            padding: 2px 8px;
-            border-radius: 8px;
-            pointer-events: none;
-        }
-        
-        /* Only enable on mobile/tablet */
-        @media (max-width: 1024px) and (hover: none) and (pointer: coarse) {
-            .magnifier {
-                display: block;
-            }
-        }
-        
-        /* ==========================================
            PRESENTATION SECTION (locked after scroll)
         ========================================== */
         .presentation-section {
@@ -653,7 +530,10 @@
             user-select: none;
             -webkit-touch-callout: none;
             -webkit-user-drag: none;
-            pointer-events: none;
+            
+            /* Allow pinch zoom transform */
+            transform-origin: center center;
+            touch-action: pinch-zoom pan-x pan-y;
         }
 
         .slide img:hover {
@@ -964,17 +844,6 @@
                 </svg>
             </button>
         </div>
-    </div>
-    
-    <!-- Zoom Magnifier (mobile only) -->
-    <div class="magnifier" id="magnifier">
-        <div class="magnifier-content">
-            <img class="magnifier-image" id="magnifierImage" src="" alt="">
-        </div>
-        <div class="magnifier-crosshair"></div>
-        <div class="magnifier-ring"></div>
-        <div class="magnifier-shine"></div>
-        <span class="magnifier-zoom-label">2×</span>
     </div>
 
     <!-- Rotate Device Overlay -->
@@ -1288,7 +1157,7 @@
             }
         });
         
-        // Prevent zoom on mobile
+        // Prevent zoom on mobile EXCEPT on slides
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
             // Prevent double-tap zoom
             let lastTouchEnd = 0;
@@ -1300,24 +1169,23 @@
                 lastTouchEnd = now;
             }, { passive: false });
             
-            // Prevent pinch zoom
-            document.addEventListener('touchmove', function(e) {
-                if (e.touches.length > 1) {
+            // Prevent gesture zoom on non-slide elements (iOS)
+            document.addEventListener('gesturestart', function(e) {
+                if (!e.target.closest('.slide')) {
                     e.preventDefault();
                 }
             }, { passive: false });
             
-            // Prevent gesture zoom (iOS)
-            document.addEventListener('gesturestart', function(e) {
-                e.preventDefault();
-            }, { passive: false });
-            
             document.addEventListener('gesturechange', function(e) {
-                e.preventDefault();
+                if (!e.target.closest('.slide')) {
+                    e.preventDefault();
+                }
             }, { passive: false });
             
             document.addEventListener('gestureend', function(e) {
-                e.preventDefault();
+                if (!e.target.closest('.slide')) {
+                    e.preventDefault();
+                }
             }, { passive: false });
             
             // Prevent context menu / long press menu on images
@@ -1333,6 +1201,162 @@
                 });
             });
         }
+        
+        // Pinch-to-zoom on slides only
+        (function() {
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            if (!isTouchDevice) return;
+            
+            let currentScale = 1;
+            let startDistance = 0;
+            let startScale = 1;
+            let currentTranslateX = 0;
+            let currentTranslateY = 0;
+            let startTranslateX = 0;
+            let startTranslateY = 0;
+            let startMidX = 0;
+            let startMidY = 0;
+            let isPinching = false;
+            let isPanning = false;
+            let activeImg = null;
+            
+            const MIN_SCALE = 1;
+            const MAX_SCALE = 4;
+            
+            function getDistance(touch1, touch2) {
+                const dx = touch1.clientX - touch2.clientX;
+                const dy = touch1.clientY - touch2.clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+            
+            function getMidpoint(touch1, touch2) {
+                return {
+                    x: (touch1.clientX + touch2.clientX) / 2,
+                    y: (touch1.clientY + touch2.clientY) / 2
+                };
+            }
+            
+            function updateTransform() {
+                if (!activeImg) return;
+                activeImg.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
+            }
+            
+            function resetZoom() {
+                if (activeImg) {
+                    activeImg.style.transition = 'transform 0.3s ease';
+                    currentScale = 1;
+                    currentTranslateX = 0;
+                    currentTranslateY = 0;
+                    updateTransform();
+                    setTimeout(() => {
+                        if (activeImg) activeImg.style.transition = '';
+                    }, 300);
+                }
+            }
+            
+            function getActiveSlideImage() {
+                return document.querySelector('.slide.active img');
+            }
+            
+            slideWrapper.addEventListener('touchstart', function(e) {
+                activeImg = getActiveSlideImage();
+                if (!activeImg) return;
+                
+                if (e.touches.length === 2) {
+                    isPinching = true;
+                    isPanning = false;
+                    startDistance = getDistance(e.touches[0], e.touches[1]);
+                    startScale = currentScale;
+                    const mid = getMidpoint(e.touches[0], e.touches[1]);
+                    startMidX = mid.x;
+                    startMidY = mid.y;
+                    startTranslateX = currentTranslateX;
+                    startTranslateY = currentTranslateY;
+                    activeImg.style.transition = '';
+                } else if (e.touches.length === 1 && currentScale > 1) {
+                    isPanning = true;
+                    isPinching = false;
+                    startMidX = e.touches[0].clientX;
+                    startMidY = e.touches[0].clientY;
+                    startTranslateX = currentTranslateX;
+                    startTranslateY = currentTranslateY;
+                    activeImg.style.transition = '';
+                }
+            }, { passive: true });
+            
+            slideWrapper.addEventListener('touchmove', function(e) {
+                if (!activeImg) return;
+                
+                if (isPinching && e.touches.length === 2) {
+                    e.preventDefault();
+                    
+                    const currentDistance = getDistance(e.touches[0], e.touches[1]);
+                    const scale = (currentDistance / startDistance) * startScale;
+                    currentScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
+                    
+                    // Pan while pinching
+                    const mid = getMidpoint(e.touches[0], e.touches[1]);
+                    currentTranslateX = startTranslateX + (mid.x - startMidX);
+                    currentTranslateY = startTranslateY + (mid.y - startMidY);
+                    
+                    updateTransform();
+                } else if (isPanning && e.touches.length === 1 && currentScale > 1) {
+                    e.preventDefault();
+                    
+                    currentTranslateX = startTranslateX + (e.touches[0].clientX - startMidX);
+                    currentTranslateY = startTranslateY + (e.touches[0].clientY - startMidY);
+                    
+                    // Limit panning
+                    const maxPan = (currentScale - 1) * 150;
+                    currentTranslateX = Math.min(maxPan, Math.max(-maxPan, currentTranslateX));
+                    currentTranslateY = Math.min(maxPan, Math.max(-maxPan, currentTranslateY));
+                    
+                    updateTransform();
+                }
+            }, { passive: false });
+            
+            slideWrapper.addEventListener('touchend', function(e) {
+                if (e.touches.length === 0) {
+                    isPinching = false;
+                    isPanning = false;
+                    
+                    // Reset if zoomed out below 1
+                    if (currentScale <= 1.05) {
+                        resetZoom();
+                    }
+                } else if (e.touches.length === 1 && isPinching) {
+                    // Transition from pinch to pan
+                    isPinching = false;
+                    if (currentScale > 1) {
+                        isPanning = true;
+                        startMidX = e.touches[0].clientX;
+                        startMidY = e.touches[0].clientY;
+                        startTranslateX = currentTranslateX;
+                        startTranslateY = currentTranslateY;
+                    }
+                }
+            }, { passive: true });
+            
+            // Reset zoom when changing slides
+            const originalGoToSlide = goToSlide;
+            goToSlide = function(index) {
+                resetZoom();
+                originalGoToSlide(index);
+                activeImg = null;
+            };
+            
+            // Double tap to reset zoom
+            let lastTap = 0;
+            slideWrapper.addEventListener('touchend', function(e) {
+                if (e.touches.length === 0 && currentScale > 1) {
+                    const now = Date.now();
+                    if (now - lastTap < 300) {
+                        resetZoom();
+                    }
+                    lastTap = now;
+                }
+            }, { passive: true });
+        })();
         
         // Install prompt logic
         (function() {
@@ -1373,143 +1397,6 @@
             });
         })();
         
-        // Magnifier logic (mobile only)
-        (function() {
-            const magnifier = document.getElementById('magnifier');
-            const magnifierImage = document.getElementById('magnifierImage');
-            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-            
-            if (!isTouchDevice) return;
-            
-            const ZOOM_LEVEL = 2;
-            const MAGNIFIER_SIZE = 160;
-            const OFFSET_Y = -100; // Position above finger
-            
-            let isActive = false;
-            let currentImg = null;
-            let holdTimeout = null;
-            
-            function getActiveSlideImage() {
-                const activeSlide = document.querySelector('.slide.active img');
-                return activeSlide;
-            }
-            
-            function showMagnifier(touch) {
-                currentImg = getActiveSlideImage();
-                if (!currentImg) return;
-                
-                // Set the magnifier image source
-                magnifierImage.src = currentImg.src;
-                
-                // Get image dimensions and position
-                const imgRect = currentImg.getBoundingClientRect();
-                
-                // Calculate scaled dimensions
-                const scaledWidth = imgRect.width * ZOOM_LEVEL;
-                const scaledHeight = imgRect.height * ZOOM_LEVEL;
-                
-                magnifierImage.style.width = scaledWidth + 'px';
-                magnifierImage.style.height = scaledHeight + 'px';
-                
-                isActive = true;
-                magnifier.classList.add('active');
-                
-                updateMagnifier(touch);
-            }
-            
-            function updateMagnifier(touch) {
-                if (!isActive || !currentImg) return;
-                
-                const imgRect = currentImg.getBoundingClientRect();
-                const touchX = touch.clientX;
-                const touchY = touch.clientY;
-                
-                // Check if touch is within image bounds
-                if (touchX < imgRect.left || touchX > imgRect.right ||
-                    touchY < imgRect.top || touchY > imgRect.bottom) {
-                    hideMagnifier();
-                    return;
-                }
-                
-                // Position magnifier above finger
-                let magX = touchX - MAGNIFIER_SIZE / 2;
-                let magY = touchY + OFFSET_Y - MAGNIFIER_SIZE / 2;
-                
-                // Keep magnifier within viewport
-                const padding = 10;
-                magX = Math.max(padding, Math.min(window.innerWidth - MAGNIFIER_SIZE - padding, magX));
-                magY = Math.max(padding, Math.min(window.innerHeight - MAGNIFIER_SIZE - padding, magY));
-                
-                magnifier.style.left = magX + 'px';
-                magnifier.style.top = magY + 'px';
-                
-                // Calculate position within image (0-1)
-                const relX = (touchX - imgRect.left) / imgRect.width;
-                const relY = (touchY - imgRect.top) / imgRect.height;
-                
-                // Calculate image offset within magnifier
-                const scaledWidth = imgRect.width * ZOOM_LEVEL;
-                const scaledHeight = imgRect.height * ZOOM_LEVEL;
-                
-                const offsetX = -(relX * scaledWidth) + MAGNIFIER_SIZE / 2;
-                const offsetY = -(relY * scaledHeight) + MAGNIFIER_SIZE / 2;
-                
-                magnifierImage.style.left = offsetX + 'px';
-                magnifierImage.style.top = offsetY + 'px';
-            }
-            
-            function hideMagnifier() {
-                isActive = false;
-                magnifier.classList.remove('active');
-                currentImg = null;
-                if (holdTimeout) {
-                    clearTimeout(holdTimeout);
-                    holdTimeout = null;
-                }
-            }
-            
-            // Touch events on slide wrapper
-            slideWrapper.addEventListener('touchstart', function(e) {
-                if (e.touches.length !== 1) return;
-                
-                const touch = e.touches[0];
-                const img = getActiveSlideImage();
-                if (!img) return;
-                
-                const imgRect = img.getBoundingClientRect();
-                
-                // Check if touch is on the image
-                if (touch.clientX >= imgRect.left && touch.clientX <= imgRect.right &&
-                    touch.clientY >= imgRect.top && touch.clientY <= imgRect.bottom) {
-                    
-                    // Small delay to differentiate from swipe
-                    holdTimeout = setTimeout(function() {
-                        showMagnifier(touch);
-                    }, 150);
-                }
-            }, { passive: true });
-            
-            slideWrapper.addEventListener('touchmove', function(e) {
-                if (!isActive && holdTimeout) {
-                    // Cancel if moving before hold threshold
-                    clearTimeout(holdTimeout);
-                    holdTimeout = null;
-                    return;
-                }
-                
-                if (isActive && e.touches.length === 1) {
-                    updateMagnifier(e.touches[0]);
-                }
-            }, { passive: true });
-            
-            slideWrapper.addEventListener('touchend', function() {
-                hideMagnifier();
-            }, { passive: true });
-            
-            slideWrapper.addEventListener('touchcancel', function() {
-                hideMagnifier();
-            }, { passive: true });
-        })();
     </script>
 </body>
 </html>
