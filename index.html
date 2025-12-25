@@ -20,21 +20,137 @@
 
         html, body {
             height: 100%;
-            height: 100dvh;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #000;
-            /* Force Safari to hide address bar on scroll */
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
         }
         
         /* iOS Safari specific fixes */
         @supports (-webkit-touch-callout: none) {
             html, body {
-                height: -webkit-fill-available;
                 min-height: -webkit-fill-available;
             }
+        }
+        
+        /* ==========================================
+           SCROLL TO START SECTION (mobile only)
+        ========================================== */
+        .scroll-intro {
+            display: none;
+            height: 100vh;
+            height: 100dvh;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(180deg, #0a0a0a 0%, #000 100%);
+        }
+        
+        /* Show only on mobile landscape */
+        @media (max-width: 932px) and (orientation: landscape) {
+            .scroll-intro {
+                display: flex;
+            }
+        }
+        
+        .scroll-intro-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .scroll-logo {
+            font-size: 32px;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+        
+        .scroll-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+        
+        .scroll-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 32px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+        
+        .scroll-arrow {
+            width: 24px;
+            height: 24px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .scroll-hint {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 0.1em;
+        }
+        
+        /* Hide scroll intro in portrait mobile (rotate message shown instead) */
+        @media (max-width: 900px) and (orientation: portrait) {
+            .scroll-intro {
+                display: none;
+            }
+        }
+        
+        /* ==========================================
+           PRESENTATION SECTION (locked after scroll)
+        ========================================== */
+        .presentation-section {
+            height: 100vh;
+            height: 100dvh;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* When locked, prevent any scroll */
+        html.locked,
+        body.locked {
+            overflow: hidden !important;
+            position: fixed !important;
+            width: 100% !important;
+            height: 100% !important;
+            top: 0 !important;
+            left: 0 !important;
+        }
+        
+        body.locked .scroll-intro {
+            display: none !important;
+        }
+        
+        body.locked .presentation-section {
+            position: fixed;
+            inset: 0;
+            height: 100%;
         }
 
         /* ==========================================
@@ -123,7 +239,7 @@
            DYNAMIC BACKGROUND
         ========================================== */
         .dynamic-background {
-            position: fixed;
+            position: absolute;
             inset: -100px;
             z-index: 0;
             overflow: hidden;
@@ -145,7 +261,7 @@
         }
 
         .bg-overlay {
-            position: fixed;
+            position: absolute;
             inset: 0;
             z-index: 1;
             background: 
@@ -155,12 +271,25 @@
         }
 
         .bg-noise {
-            position: fixed;
+            position: absolute;
             inset: 0;
             z-index: 2;
             opacity: 0.03;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
             pointer-events: none;
+        }
+        
+        .progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.8) 0%, 
+                rgba(255, 255, 255, 0.4) 100%);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
         }
 
         /* ==========================================
@@ -170,21 +299,10 @@
             position: relative;
             z-index: 10;
             width: 100%;
-            height: 100vh;
-            height: 100dvh;
-            height: calc(var(--vh, 1vh) * 100);
-            min-height: -webkit-fill-available;
+            height: 100%;
             display: flex;
             flex-direction: column;
             padding: 24px 24px 0 24px;
-        }
-        
-        /* iOS Safari - ensure full height usage */
-        @supports (-webkit-touch-callout: none) {
-            .presentation-container {
-                height: -webkit-fill-available;
-                min-height: -webkit-fill-available;
-            }
         }
 
         .slide-wrapper {
@@ -246,6 +364,18 @@
             gap: 20px;
             padding: 24px 0;
             flex-shrink: 0;
+        }
+        
+        /* Mobile landscape - make slide-wrapper take full height */
+        @media (max-width: 932px) and (orientation: landscape) {
+            .presentation-container {
+                padding-bottom: 0;
+            }
+            
+            .slide-wrapper {
+                flex: 1;
+                height: 100%;
+            }
         }
 
         .nav-btn {
@@ -322,25 +452,132 @@
         }
 
         /* ==========================================
-           PROGRESS BAR
-        ========================================== */
-        .progress-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 2px;
-            background: linear-gradient(90deg, 
-                rgba(255, 255, 255, 0.8) 0%, 
-                rgba(255, 255, 255, 0.4) 100%);
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100;
-            box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
-        }
-
-        /* ==========================================
            RESPONSIVE - LANDSCAPE MOBILE & TABLET
         ========================================== */
-        @media (max-height: 500px) {
+        
+        /* Mobile landscape - navigation overlay */
+        @media (max-width: 932px) and (orientation: landscape) {
+            .presentation-container {
+                padding: 8px 12px 0 12px;
+            }
+            
+            .slide-wrapper {
+                position: relative;
+                height: 100%;
+            }
+            
+            .nav-container {
+                position: absolute;
+                bottom: 12px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 50;
+                gap: 12px;
+                padding: 10px 0;
+                background: rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-radius: 40px;
+                padding: 8px 16px;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .nav-btn {
+                width: 36px;
+                height: 36px;
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.15);
+            }
+            
+            .nav-btn:active:not(:disabled) {
+                background: rgba(255, 255, 255, 0.25);
+            }
+            
+            .nav-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            .slide-indicators {
+                padding: 5px 10px;
+                gap: 5px;
+                background: transparent;
+                border: none;
+            }
+
+            .indicator {
+                width: 5px;
+                height: 5px;
+            }
+
+            .indicator.active {
+                width: 16px;
+                border-radius: 3px;
+            }
+
+            .slide img {
+                border-radius: 8px;
+                max-height: calc(100% - 20px);
+            }
+
+            .bg-image {
+                filter: blur(60px) saturate(1.1);
+            }
+        }
+        
+        /* Extra small landscape (very short screens like iPhone SE landscape) */
+        @media (max-height: 400px) and (orientation: landscape) {
+            .presentation-container {
+                padding: 4px 8px 0 8px;
+            }
+            
+            .nav-container {
+                bottom: 8px;
+                padding: 6px 12px;
+                gap: 8px;
+            }
+            
+            .nav-btn {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .nav-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+            
+            .slide-indicators {
+                padding: 4px 8px;
+                gap: 4px;
+            }
+            
+            .indicator {
+                width: 4px;
+                height: 4px;
+            }
+            
+            .indicator.active {
+                width: 12px;
+            }
+            
+            .slide img {
+                border-radius: 6px;
+            }
+        }
+
+        /* Tablet landscape - keep normal layout */
+        @media (min-width: 933px) and (max-width: 1024px) and (orientation: landscape) {
+            .presentation-container {
+                padding: 16px 20px 0 20px;
+            }
+            
+            .nav-container {
+                padding: 16px 0;
+            }
+        }
+        
+        @media (max-height: 500px) and (min-width: 933px) {
             .presentation-container {
                 padding: 12px 16px 0 16px;
             }
@@ -379,101 +616,6 @@
             }
         }
 
-        @media (max-width: 768px) and (orientation: landscape) {
-            .presentation-container {
-                padding: 8px 12px 0 12px;
-            }
-
-            .nav-container {
-                gap: 12px;
-                padding: 10px 0;
-            }
-
-            .nav-btn {
-                width: 36px;
-                height: 36px;
-            }
-            
-            .nav-btn svg {
-                width: 16px;
-                height: 16px;
-            }
-
-            .slide-indicators {
-                padding: 5px 10px;
-                gap: 5px;
-            }
-
-            .indicator {
-                width: 5px;
-                height: 5px;
-            }
-
-            .indicator.active {
-                width: 16px;
-                border-radius: 3px;
-            }
-
-            .slide img {
-                border-radius: 8px;
-            }
-
-            .bg-image {
-                filter: blur(60px) saturate(1.1);
-            }
-        }
-
-        /* Extra small landscape (very short screens) */
-        @media (max-height: 400px) and (orientation: landscape) {
-            .presentation-container {
-                padding: 6px 10px 0 10px;
-            }
-            
-            .nav-container {
-                padding: 8px 0;
-                gap: 10px;
-            }
-            
-            .nav-btn {
-                width: 32px;
-                height: 32px;
-            }
-            
-            .nav-btn svg {
-                width: 14px;
-                height: 14px;
-            }
-            
-            .slide-indicators {
-                padding: 4px 8px;
-                gap: 4px;
-            }
-            
-            .indicator {
-                width: 4px;
-                height: 4px;
-            }
-            
-            .indicator.active {
-                width: 14px;
-            }
-            
-            .slide img {
-                border-radius: 6px;
-            }
-        }
-
-        /* Tablet landscape */
-        @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
-            .presentation-container {
-                padding: 16px 20px 0 20px;
-            }
-            
-            .nav-container {
-                padding: 16px 0;
-            }
-        }
-
         /* Safe area for notched devices */
         @supports (padding: max(0px)) {
             .presentation-container {
@@ -509,16 +651,32 @@
         </div>
     </div>
 
-    <!-- Dynamic Blurred Background -->
-    <div class="dynamic-background" id="dynamicBg"></div>
-    <div class="bg-overlay"></div>
-    <div class="bg-noise"></div>
+    <!-- Scroll Intro Section -->
+    <section class="scroll-intro" id="scrollIntro">
+        <div class="scroll-intro-content">
+            <div class="scroll-logo">JAVLOT</div>
+            <p class="scroll-text">Service Presentation</p>
+            <div class="scroll-indicator">
+                <svg class="scroll-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M19 12l-7 7-7-7"/>
+                </svg>
+                <span class="scroll-hint">Scroll down</span>
+            </div>
+        </div>
+    </section>
 
-    <!-- Progress Bar -->
-    <div class="progress-bar" id="progressBar"></div>
+    <!-- Presentation Section -->
+    <section class="presentation-section" id="presentationSection">
+        <!-- Dynamic Blurred Background -->
+        <div class="dynamic-background" id="dynamicBg"></div>
+        <div class="bg-overlay"></div>
+        <div class="bg-noise"></div>
 
-    <!-- Main Container -->
-    <div class="presentation-container">
+        <!-- Progress Bar -->
+        <div class="progress-bar" id="progressBar"></div>
+
+        <!-- Main Container -->
+        <div class="presentation-container">
         <div class="slide-wrapper" id="slideWrapper">
             <div class="slide active" data-slide="0">
                 <img src="https://cdn.prod.website-files.com/6922ec1acf460de83ba1b177/69448674b3e667cec0238eee_Slide-1.png" alt="Slide 1">
@@ -567,7 +725,7 @@
                 </svg>
             </button>
         </div>
-    </div>
+    </section>
 
     <script>
         const slides = document.querySelectorAll('.slide');
@@ -577,9 +735,12 @@
         const progressBar = document.getElementById('progressBar');
         const slideWrapper = document.getElementById('slideWrapper');
         const dynamicBg = document.getElementById('dynamicBg');
+        const scrollIntro = document.getElementById('scrollIntro');
+        const presentationSection = document.getElementById('presentationSection');
 
         let currentIndex = 0;
         const totalSlides = slides.length;
+        let isLocked = false;
 
         // Get all slide image URLs
         const slideImages = Array.from(slides).map(slide => {
@@ -645,12 +806,68 @@
             }
         }
 
+        // Lock the presentation after scrolling
+        function lockPresentation() {
+            if (isLocked) return;
+            isLocked = true;
+            
+            // Scroll to top first
+            window.scrollTo(0, 0);
+            
+            // Then lock
+            document.body.classList.add('locked');
+            document.documentElement.classList.add('locked');
+            
+            // Prevent any scroll attempts
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.top = '0';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.bottom = '0';
+            document.documentElement.style.overflow = 'hidden';
+        }
+
+        // Scroll detection
+        function handleScroll() {
+            if (isLocked) return;
+            if (!isMobileLandscape()) {
+                lockPresentation();
+                return;
+            }
+            
+            const scrollY = window.scrollY || window.pageYOffset;
+            const triggerPoint = window.innerHeight * 0.25; // Lock after scrolling 25%
+            
+            if (scrollY > triggerPoint) {
+                lockPresentation();
+            }
+        }
+
+        // Scroll to presentation on click/tap of intro
+        scrollIntro.addEventListener('click', function() {
+            presentationSection.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(lockPresentation, 500);
+        });
+
+        // Listen for scroll
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
         // Button clicks
         prevBtn.addEventListener('click', prevSlide);
         nextBtn.addEventListener('click', nextSlide);
 
         // Keyboard navigation
         document.addEventListener('keydown', function(e) {
+            if (!isLocked) {
+                if (e.key === 'ArrowDown' || e.key === ' ') {
+                    e.preventDefault();
+                    presentationSection.scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(lockPresentation, 500);
+                }
+                return;
+            }
+            
             if (e.key === 'ArrowRight' || e.key === ' ') {
                 e.preventDefault();
                 nextSlide();
@@ -666,19 +883,27 @@
             }
         });
 
-        // Touch swipe
+        // Touch swipe on presentation
         let touchStartX = 0;
+        let touchStartY = 0;
         let touchEndX = 0;
+        let touchEndY = 0;
 
         slideWrapper.addEventListener('touchstart', function(e) {
             touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
         }, { passive: true });
 
         slideWrapper.addEventListener('touchend', function(e) {
             touchEndX = e.changedTouches[0].screenX;
-            const diff = touchStartX - touchEndX;
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) {
+            touchEndY = e.changedTouches[0].screenY;
+            
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            
+            // Only handle horizontal swipes
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                if (diffX > 0) {
                     nextSlide();
                 } else {
                     prevSlide();
@@ -695,22 +920,27 @@
         // Init
         updateSlide();
         
-        // iOS Safari height fix - recalculate on resize/orientation change
-        function setVH() {
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        // Check if mobile landscape (needs scroll intro)
+        function isMobileLandscape() {
+            return window.innerWidth <= 932 && window.innerWidth > window.innerHeight;
         }
         
-        setVH();
-        window.addEventListener('resize', setVH);
-        window.addEventListener('orientationchange', function() {
-            setTimeout(setVH, 100);
+        // Check if already scrolled (page refresh) - only on mobile
+        if (isMobileLandscape() && window.scrollY > window.innerHeight * 0.3) {
+            lockPresentation();
+        }
+        
+        // On desktop, lock immediately
+        if (!isMobileLandscape()) {
+            lockPresentation();
+        }
+        
+        // Handle orientation/resize changes
+        window.addEventListener('resize', function() {
+            if (!isMobileLandscape() && !isLocked) {
+                lockPresentation();
+            }
         });
-        
-        // Attempt to scroll past address bar on iOS
-        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-            window.scrollTo(0, 1);
-        }
     </script>
 </body>
 </html>
