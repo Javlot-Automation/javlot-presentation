@@ -2,11 +2,22 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
+    
+    <!-- Web App / PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Javlot">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
+    <meta name="application-name" content="Javlot">
+    <meta name="msapplication-TileColor" content="#000000">
+    <meta name="msapplication-navbutton-color" content="#000000">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- Optional: Add icon for home screen -->
+    <!-- <link rel="apple-touch-icon" href="icon-180.png"> -->
+    <!-- <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"> -->
     <title>Javlot — Service Presentation</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,6 +36,9 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #000;
             scroll-behavior: smooth;
+            /* Prevent zoom on mobile */
+            touch-action: pan-x pan-y;
+            -ms-touch-action: pan-x pan-y;
         }
         
         /* iOS Safari specific fixes */
@@ -34,18 +48,22 @@
             }
         }
         
+        /* Prevent double-tap zoom on all elements */
+        * {
+            touch-action: manipulation;
+        }
+        
         /* ==========================================
            SCROLL TO START SECTION (mobile only)
         ========================================== */
         .scroll-intro {
             display: none;
-            height: 100vh;
-            height: 100dvh;
+            min-height: 200vh; /* Much taller to allow real scrolling */
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             position: relative;
             background: linear-gradient(180deg, #0a0a0a 0%, #000 100%);
+            padding-top: 30vh;
         }
         
         /* Show only on mobile landscape */
@@ -61,6 +79,8 @@
             align-items: center;
             gap: 24px;
             animation: fadeInUp 1s ease-out;
+            position: sticky;
+            top: 25vh;
         }
         
         @keyframes fadeInUp {
@@ -119,6 +139,156 @@
         @media (max-width: 900px) and (orientation: portrait) {
             .scroll-intro {
                 display: none;
+            }
+        }
+        
+        /* ==========================================
+           ADD TO HOME SCREEN PROMPT (mobile only)
+        ========================================== */
+        .install-prompt {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10000;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 20px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            animation: slideUp 0.4s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .install-prompt.hidden {
+            display: none !important;
+        }
+        
+        .install-prompt-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .install-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .install-icon svg {
+            width: 24px;
+            height: 24px;
+            color: #fff;
+        }
+        
+        .install-text {
+            flex: 1;
+        }
+        
+        .install-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        
+        .install-description {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.4;
+        }
+        
+        .install-description .ios-steps {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        
+        .install-description .ios-steps svg {
+            width: 14px;
+            height: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .install-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+        
+        .install-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .install-close svg {
+            width: 16px;
+            height: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* Platform-specific hints */
+        .install-description .ios-hint,
+        .install-description .android-hint {
+            display: none;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .install-description .ios-hint svg {
+            width: 16px;
+            height: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            display: inline;
+            vertical-align: middle;
+        }
+        
+        /* Show on mobile only, when not in standalone mode */
+        @media (max-width: 932px) {
+            .install-prompt.show {
+                display: block;
+            }
+        }
+        
+        /* Hide in standalone/fullscreen mode */
+        @media (display-mode: standalone), (display-mode: fullscreen) {
+            .install-prompt {
+                display: none !important;
+            }
+            .scroll-intro {
+                display: none !important;
+            }
+            .rotate-overlay {
+                display: none !important;
             }
         }
         
@@ -634,6 +804,29 @@
     </style>
 </head>
 <body>
+    <!-- Install Prompt (mobile only) -->
+    <div class="install-prompt" id="installPrompt">
+        <div class="install-prompt-content">
+            <div class="install-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                </svg>
+            </div>
+            <div class="install-text">
+                <div class="install-title">Install Javlot</div>
+                <div class="install-description">
+                    <span class="ios-hint">Tap <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> then "Add to Home Screen"</span>
+                    <span class="android-hint">Tap menu then "Add to Home Screen"</span>
+                </div>
+            </div>
+            <button class="install-close" id="installClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <!-- Rotate Device Overlay -->
     <div class="rotate-overlay" id="rotateOverlay">
         <svg class="rotate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -837,7 +1030,7 @@
             }
             
             const scrollY = window.scrollY || window.pageYOffset;
-            const triggerPoint = window.innerHeight * 0.25; // Lock after scrolling 25%
+            const triggerPoint = window.innerHeight * 0.8; // Lock after scrolling 80% of viewport
             
             if (scrollY > triggerPoint) {
                 lockPresentation();
@@ -846,8 +1039,11 @@
 
         // Scroll to presentation on click/tap of intro
         scrollIntro.addEventListener('click', function() {
-            presentationSection.scrollIntoView({ behavior: 'smooth' });
-            setTimeout(lockPresentation, 500);
+            window.scrollTo({
+                top: window.innerHeight * 0.85,
+                behavior: 'smooth'
+            });
+            setTimeout(lockPresentation, 600);
         });
 
         // Listen for scroll
@@ -926,7 +1122,7 @@
         }
         
         // Check if already scrolled (page refresh) - only on mobile
-        if (isMobileLandscape() && window.scrollY > window.innerHeight * 0.3) {
+        if (isMobileLandscape() && window.scrollY > window.innerHeight * 0.8) {
             lockPresentation();
         }
         
@@ -941,6 +1137,78 @@
                 lockPresentation();
             }
         });
+        
+        // Prevent zoom on mobile
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            // Prevent double-tap zoom
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(e) {
+                const now = Date.now();
+                if (now - lastTouchEnd <= 300) {
+                    e.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, { passive: false });
+            
+            // Prevent pinch zoom
+            document.addEventListener('touchmove', function(e) {
+                if (e.touches.length > 1) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            // Prevent gesture zoom (iOS)
+            document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+            }, { passive: false });
+            
+            document.addEventListener('gesturechange', function(e) {
+                e.preventDefault();
+            }, { passive: false });
+            
+            document.addEventListener('gestureend', function(e) {
+                e.preventDefault();
+            }, { passive: false });
+        }
+        
+        // Install prompt logic
+        (function() {
+            const installPrompt = document.getElementById('installPrompt');
+            const installClose = document.getElementById('installClose');
+            
+            // Check if already in standalone mode
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                || window.navigator.standalone === true
+                || document.referrer.includes('android-app://');
+            
+            // Check if mobile
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
+            // Check if already dismissed
+            const isDismissed = localStorage.getItem('installPromptDismissed');
+            
+            if (isMobile && !isStandalone && !isDismissed) {
+                // Show after a short delay
+                setTimeout(function() {
+                    installPrompt.classList.add('show');
+                    
+                    // Show platform-specific hint
+                    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    if (isIOS) {
+                        document.querySelector('.ios-hint').style.display = 'inline-flex';
+                    } else {
+                        document.querySelector('.android-hint').style.display = 'inline-flex';
+                    }
+                }, 2000);
+            }
+            
+            // Close button
+            installClose.addEventListener('click', function() {
+                installPrompt.classList.remove('show');
+                installPrompt.classList.add('hidden');
+                localStorage.setItem('installPromptDismissed', 'true');
+            });
+        })();
     </script>
 </body>
 </html>
