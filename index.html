@@ -605,6 +605,13 @@
             align-items: center;
             justify-content: center;
             min-height: 0;
+            
+            /* Prevent selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
         }
 
         .slide {
@@ -638,6 +645,15 @@
                 0 12px 48px rgba(0, 0, 0, 0.4),
                 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
             transition: box-shadow 0.3s ease;
+            
+            /* Prevent selection and context menu */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
+            pointer-events: none;
         }
 
         .slide img:hover {
@@ -1303,6 +1319,19 @@
             document.addEventListener('gestureend', function(e) {
                 e.preventDefault();
             }, { passive: false });
+            
+            // Prevent context menu / long press menu on images
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            // Prevent image drag
+            document.querySelectorAll('img').forEach(function(img) {
+                img.addEventListener('dragstart', function(e) {
+                    e.preventDefault();
+                });
+            });
         }
         
         // Install prompt logic
