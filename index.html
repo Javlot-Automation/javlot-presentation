@@ -1379,18 +1379,29 @@
                 isZoomed = currentScale > 1.05;
             }
             
-            function resetZoom() {
+            function resetZoom(animated) {
                 if (activeImg) {
-                    activeImg.style.transition = 'transform 0.3s ease';
-                    currentScale = 1;
-                    currentTranslateX = 0;
-                    currentTranslateY = 0;
-                    updateTransform();
-                    isZoomed = false;
-                    setTimeout(() => {
-                        if (activeImg) activeImg.style.transition = '';
-                    }, 300);
+                    if (animated !== false) {
+                        activeImg.style.transition = 'transform 0.3s ease';
+                    }
+                    activeImg.style.transform = 'translate(0px, 0px) scale(1)';
+                    if (animated !== false) {
+                        setTimeout(() => {
+                            if (activeImg) activeImg.style.transition = '';
+                        }, 300);
+                    }
                 }
+                // Reset all zoom state variables
+                currentScale = 1;
+                currentTranslateX = 0;
+                currentTranslateY = 0;
+                startScale = 1;
+                startDistance = 0;
+                startTranslateX = 0;
+                startTranslateY = 0;
+                isZoomed = false;
+                isPinching = false;
+                isPanning = false;
             }
             
             function getActiveSlideImage() {
@@ -1461,7 +1472,7 @@
                     
                     // Reset if zoomed out below 1
                     if (currentScale <= 1.05) {
-                        resetZoom();
+                        resetZoom(true);
                     }
                 } else if (e.touches.length === 1 && isPinching) {
                     // Transition from pinch to pan
@@ -1479,9 +1490,19 @@
             // Reset zoom when changing slides
             const originalGoToSlide = goToSlide;
             goToSlide = function(index) {
-                resetZoom();
-                originalGoToSlide(index);
+                // Reset current slide's transform first
+                resetZoom(false);
                 activeImg = null;
+                // Then change slide
+                originalGoToSlide(index);
+                // Get new slide image and ensure it's reset
+                setTimeout(function() {
+                    const newImg = getActiveSlideImage();
+                    if (newImg) {
+                        newImg.style.transform = '';
+                        newImg.style.transition = '';
+                    }
+                }, 50);
             };
             
             // Double tap to reset zoom
@@ -1490,7 +1511,7 @@
                 if (e.touches.length === 0 && currentScale > 1) {
                     const now = Date.now();
                     if (now - lastTap < 300) {
-                        resetZoom();
+                        resetZoom(true);
                     }
                     lastTap = now;
                 }
