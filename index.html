@@ -293,6 +293,103 @@
         }
         
         /* ==========================================
+           UX HINTS TOAST (mobile only)
+        ========================================== */
+        .ux-hints {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 8000;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px 20px;
+            max-width: 320px;
+            width: calc(100% - 40px);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .ux-hints.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .ux-hints-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .ux-hints-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .ux-hint-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .ux-hint-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .ux-hint-icon svg {
+            width: 18px;
+            height: 18px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .ux-hint-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.4;
+        }
+        
+        .ux-hints-dismiss {
+            display: block;
+            width: 100%;
+            margin-top: 14px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .ux-hints-dismiss:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        /* Only show on touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .ux-hints {
+                display: block;
+            }
+        }
+        
+        /* ==========================================
            PRESENTATION SECTION (locked after scroll)
         ========================================== */
         .presentation-section {
@@ -845,6 +942,40 @@
             </button>
         </div>
     </div>
+    
+    <!-- UX Hints Toast (mobile only) -->
+    <div class="ux-hints" id="uxHints">
+        <div class="ux-hints-title">Navigation tips</div>
+        <div class="ux-hints-list">
+            <div class="ux-hint-item">
+                <div class="ux-hint-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
+                </div>
+                <span class="ux-hint-text">Swipe left or right to navigate between slides</span>
+            </div>
+            <div class="ux-hint-item">
+                <div class="ux-hint-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                    </svg>
+                </div>
+                <span class="ux-hint-text">Pinch to zoom in on slides for details</span>
+            </div>
+            <div class="ux-hint-item">
+                <div class="ux-hint-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="6" height="6" rx="1"/>
+                        <path d="M5 15V9a2 2 0 012-2h6"/>
+                        <path d="M19 9v6a2 2 0 01-2 2h-6"/>
+                    </svg>
+                </div>
+                <span class="ux-hint-text">Double-tap to reset zoom</span>
+            </div>
+        </div>
+        <button class="ux-hints-dismiss" id="uxHintsDismiss">Got it</button>
+    </div>
 
     <!-- Rotate Device Overlay -->
     <div class="rotate-overlay" id="rotateOverlay">
@@ -1098,18 +1229,23 @@
             }
         });
 
-        // Touch swipe on presentation
+        // Touch swipe on presentation (disabled when zoomed)
         let touchStartX = 0;
         let touchStartY = 0;
         let touchEndX = 0;
         let touchEndY = 0;
+        let isZoomed = false; // Flag to track zoom state
 
         slideWrapper.addEventListener('touchstart', function(e) {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
+            if (e.touches.length === 1 && !isZoomed) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }
         }, { passive: true });
 
         slideWrapper.addEventListener('touchend', function(e) {
+            if (isZoomed) return; // Block swipe when zoomed
+            
             touchEndX = e.changedTouches[0].screenX;
             touchEndY = e.changedTouches[0].screenY;
             
@@ -1239,6 +1375,8 @@
             function updateTransform() {
                 if (!activeImg) return;
                 activeImg.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
+                // Update global zoom flag
+                isZoomed = currentScale > 1.05;
             }
             
             function resetZoom() {
@@ -1248,6 +1386,7 @@
                     currentTranslateX = 0;
                     currentTranslateY = 0;
                     updateTransform();
+                    isZoomed = false;
                     setTimeout(() => {
                         if (activeImg) activeImg.style.transition = '';
                     }, 300);
@@ -1395,6 +1534,43 @@
                 installPrompt.classList.add('hidden');
                 localStorage.setItem('installPromptDismissed', 'true');
             });
+        })();
+        
+        // UX Hints toast logic (mobile only)
+        (function() {
+            const uxHints = document.getElementById('uxHints');
+            const uxHintsDismiss = document.getElementById('uxHintsDismiss');
+            
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const hasSeenHints = localStorage.getItem('uxHintsSeen');
+            
+            if (isTouchDevice && !hasSeenHints) {
+                // Show hints after presentation is locked (after scroll)
+                const checkAndShow = function() {
+                    if (isLocked) {
+                        setTimeout(function() {
+                            uxHints.classList.add('show');
+                        }, 1000);
+                    } else {
+                        setTimeout(checkAndShow, 500);
+                    }
+                };
+                checkAndShow();
+            }
+            
+            // Dismiss button
+            uxHintsDismiss.addEventListener('click', function() {
+                uxHints.classList.remove('show');
+                localStorage.setItem('uxHintsSeen', 'true');
+            });
+            
+            // Auto-hide after 10 seconds
+            setTimeout(function() {
+                if (uxHints.classList.contains('show')) {
+                    uxHints.classList.remove('show');
+                    localStorage.setItem('uxHintsSeen', 'true');
+                }
+            }, 15000);
         })();
         
     </script>
